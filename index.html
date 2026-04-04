@@ -443,7 +443,7 @@ body.intro-state .glass {
     bottom: 4px;
     right: 4px;
     width: 38px;
-    height: 135px; 
+    height: 170px; 
     background-color: rgba(0, 0, 0, 0.05); 
     -webkit-backdrop-filter: blur(calc(30px * var(--hud-blur-multiplier)));
     backdrop-filter: blur(calc(30px * var(--hud-blur-multiplier)));
@@ -1878,6 +1878,7 @@ body.br-mode .br-control-indicator:hover {
     padding: 0;
     box-sizing: border-box;
     gap: 0;
+    position: relative;
     background: #f0f4f8;
 }
 
@@ -1942,6 +1943,33 @@ body.br-mode .br-control-indicator:hover {
 
 .cal-close-btn {
     margin-left: 0;
+}
+
+.cal-overview-fab {
+    position: absolute;
+    right: 18px;
+    bottom: 18px;
+    width: 46px;
+    height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(42, 52, 57, 0.14);
+    border-radius: 50%;
+    background: rgba(255,255,255,0.94);
+    color: #2a3439;
+    box-shadow: 0 12px 30px rgba(18, 28, 36, 0.18);
+    cursor: pointer;
+    z-index: 8;
+    font-size: 20px;
+    line-height: 1;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.cal-overview-fab:hover {
+    transform: translateY(-1px);
+    background: #ffffff;
+    box-shadow: 0 16px 34px rgba(18, 28, 36, 0.22);
 }
 
 .cal-grid-wrap {
@@ -14499,40 +14527,41 @@ function ensureTodoOverviewModal() {
 }
 
 function ensureTodoOverviewButtons() {
-    const controls = document.querySelector('.controls');
-    if (controls && !document.getElementById('todoOverviewOpenBtn')) {
-        const button = document.createElement('button');
-        button.id = 'todoOverviewOpenBtn';
-        button.type = 'button';
-        button.className = 'control-btn';
-        button.textContent = '🧾';
-        button.title = 'Abrir lista geral de To Dos';
-        button.setAttribute('aria-label', 'Abrir lista geral de To Dos');
-        const refreshBtn = document.getElementById('refreshDataBtn');
-        if (refreshBtn?.nextSibling) {
-            controls.insertBefore(button, refreshBtn.nextSibling);
-        } else if (refreshBtn) {
-            controls.appendChild(button);
-        } else {
-            controls.insertBefore(button, controls.firstChild || null);
+    const floatingControls = document.querySelector('.floating-controls');
+    let timelineButton = document.getElementById('todoOverviewOpenBtn');
+    if (!timelineButton) {
+        timelineButton = document.createElement('button');
+        timelineButton.id = 'todoOverviewOpenBtn';
+        timelineButton.type = 'button';
+        timelineButton.className = 'control-btn';
+        timelineButton.title = 'Abrir lista geral de To Dos';
+        timelineButton.setAttribute('aria-label', 'Abrir lista geral de To Dos');
+    }
+    timelineButton.textContent = '☰';
+    if (floatingControls) {
+        const addProjectBtn = document.getElementById('addProjectBtn');
+        if (addProjectBtn && addProjectBtn.parentElement === floatingControls) {
+            if (addProjectBtn.nextSibling !== timelineButton) {
+                floatingControls.insertBefore(timelineButton, addProjectBtn.nextSibling);
+            }
+        } else if (timelineButton.parentElement !== floatingControls) {
+            floatingControls.appendChild(timelineButton);
         }
     }
 
-    const calendarToolbar = document.querySelector('#calendarModal .cal-toolbar');
-    if (calendarToolbar && !document.getElementById('calendarTodoOverviewBtn')) {
-        const button = document.createElement('button');
-        button.id = 'calendarTodoOverviewBtn';
-        button.type = 'button';
-        button.className = 'cal-nav-btn';
-        button.textContent = '🧾';
-        button.title = 'Abrir lista geral de To Dos';
-        button.setAttribute('aria-label', 'Abrir lista geral de To Dos');
-        const closeBtn = document.getElementById('calCloseBtn');
-        if (closeBtn) {
-            calendarToolbar.insertBefore(button, closeBtn);
-        } else {
-            calendarToolbar.appendChild(button);
-        }
+    const calendarInner = document.querySelector('#calendarModal .cal-modal-inner');
+    let calendarButton = document.getElementById('calendarTodoOverviewBtn');
+    if (!calendarButton) {
+        calendarButton = document.createElement('button');
+        calendarButton.id = 'calendarTodoOverviewBtn';
+        calendarButton.type = 'button';
+        calendarButton.title = 'Abrir lista geral de To Dos';
+        calendarButton.setAttribute('aria-label', 'Abrir lista geral de To Dos');
+    }
+    calendarButton.className = 'cal-overview-fab';
+    calendarButton.textContent = '☰';
+    if (calendarInner && calendarButton.parentElement !== calendarInner) {
+        calendarInner.appendChild(calendarButton);
     }
 }
 
