@@ -2956,6 +2956,16 @@ body.br-mode .br-control-indicator:hover {
     color: #f7fbff;
 }
 
+.todo-overview-pill.is-done {
+    border-color: rgba(68, 174, 118, 0.32);
+    background: rgba(68, 174, 118, 0.18);
+}
+
+.todo-overview-pill.is-pending {
+    border-color: rgba(214, 168, 59, 0.32);
+    background: rgba(214, 168, 59, 0.18);
+}
+
 .todo-overview-hint {
     margin-bottom: 14px;
     padding: 12px 14px;
@@ -3064,7 +3074,7 @@ body.br-mode .br-control-indicator:hover {
     flex-direction: column;
     gap: 8px;
     padding: 10px 12px;
-    border-radius: 16px;
+    border-radius: 12px;
     background: var(--todo-overview-bg, rgba(255,255,255,0.82));
     border: 1px solid var(--todo-overview-border, rgba(0,0,0,0.12));
     box-shadow: 0 10px 24px rgba(3, 12, 18, 0.12);
@@ -3075,6 +3085,10 @@ body.br-mode .br-control-indicator:hover {
 .todo-overview-card.is-done .todo-overview-card-text {
     color: rgba(16,20,23,0.54);
     text-decoration: line-through;
+}
+
+.todo-overview-card.is-done {
+    padding: 1px 7px;
 }
 
 .todo-overview-card.is-editing {
@@ -3094,9 +3108,9 @@ body.br-mode .br-control-indicator:hover {
 }
 
 .todo-overview-project-btn {
-    border: none;
-    background: transparent;
-    padding: 0;
+    border: 1px solid var(--todo-overview-color, #36586f);
+    background: var(--todo-overview-project-bg, rgba(54, 88, 111, 0.16));
+    padding: 5px;
     margin: 0;
     font-size: 12px;
     font-weight: 800;
@@ -3104,10 +3118,17 @@ body.br-mode .br-control-indicator:hover {
     color: var(--todo-overview-color, #36586f);
     cursor: pointer;
     text-align: left;
+    border-radius: 12px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.24);
 }
 
 .todo-overview-project-btn:hover {
     text-decoration: underline;
+}
+
+.todo-overview-project-btn.is-active {
+    background: var(--todo-overview-project-bg-strong, rgba(54, 88, 111, 0.28));
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
 }
 
 .todo-overview-date-chip {
@@ -4954,6 +4975,7 @@ let todoCommitInFlightCount = 0;
 let todoOverviewState = {
     userKey: '',
     hasSheets: false,
+    filterProjectName: '',
     editingId: '',
     dragItem: null,
     dragMode: 'move',
@@ -14543,8 +14565,9 @@ function ensureTodoOverviewModal() {
                     <h2>To Dos por data</h2>
                 </div>
                 <div class="todo-overview-summary">
-                    <span class="todo-overview-pill" id="todoOverviewUserPill">Google</span>
-                    <span class="todo-overview-range" id="todoOverviewRangeLabel">1 semana atrás até o futuro</span>
+                    <span class="todo-overview-pill" id="todoOverviewTotalPill">To Do 0</span>
+                    <span class="todo-overview-pill is-done" id="todoOverviewDonePill">Prontos 0</span>
+                    <span class="todo-overview-pill is-pending" id="todoOverviewPendingPill">To Do a fazer 0</span>
                 </div>
             </div>
             <div class="todo-overview-hint hidden" id="todoOverviewHint"></div>
@@ -14630,12 +14653,18 @@ function createTodoOverviewProjectButton(projectName, dateColumnIndex = null) {
     button.type = 'button';
     button.className = 'todo-overview-project-btn';
     button.textContent = getTodoDisplayProjectName(projectName);
-    button.title = `Abrir To Do do projeto ${projectName}`;
-    button.style.setProperty('--todo-overview-color', normalizeHexColorInput(getTodoProjectAccentColor(projectName) || TODO_DEFAULT_COLOR) || TODO_DEFAULT_COLOR);
+    const projectColor = normalizeHexColorInput(getTodoProjectAccentColor(projectName) || TODO_DEFAULT_COLOR) || TODO_DEFAULT_COLOR;
+    button.title = todoOverviewState.filterProjectName === projectName
+        ? `Desligar filtro do projeto ${projectName}`
+        : `Filtrar pelo projeto ${projectName}`;
+    button.style.setProperty('--todo-overview-color', projectColor);
+    button.style.setProperty('--todo-overview-project-bg', hexToRgba(projectColor, 0.16));
+    button.style.setProperty('--todo-overview-project-bg-strong', hexToRgba(projectColor, 0.3));
+    button.classList.toggle('is-active', todoOverviewState.filterProjectName === projectName);
     button.addEventListener('click', (event) => {
         event.stopPropagation();
-        closeTodoOverviewModal();
-        openTodoModal(projectName, Number.isInteger(dateColumnIndex) ? { dateColumnIndex } : {});
+        todoOverviewState.filterProjectName = todoOverviewState.filterProjectName === projectName ? '' : projectName;
+        renderTodoOverviewModal();
     });
     return button;
 }
@@ -14679,14 +14708,22 @@ function ensureTodoOverviewButtons() {
     }
 }
 
-function updateTodoOverviewSummary(groupCount = 0, itemCount = 0) {
-    const userPill = document.getElementById('todoOverviewUserPill');
-    const rangeLabel = document.getElementById('todoOverviewRangeLabel');
-    if (userPill) {
-        userPill.textContent = todoOverviewState.userKey || 'Google';
+function updateTodoOverviewSummary(stats = {}) {
+    const totalPill = document.getElementById('todoOverviewTotalPill');
+    const donePill = document.getElementById('todoOverviewDonePill');
+    const pendingPill = document.getElementById('todoOverviewPendingPill');
+    const total = Number(stats.total || 0);
+    const done = Number(stats.done || 0);
+    const pending = Number(stats.pending || 0);
+
+    if (totalPill) {
+        totalPill.textContent = `To Do ${total}`;
     }
-    if (rangeLabel) {
-        rangeLabel.textContent = `${groupCount} data${groupCount === 1 ? '' : 's'} • ${itemCount} To Do${itemCount === 1 ? '' : 's'} • 1 semana atrás até o futuro`;
+    if (donePill) {
+        donePill.textContent = `Prontos ${done}`;
+    }
+    if (pendingPill) {
+        pendingPill.textContent = `To Do a fazer ${pending}`;
     }
 }
 
@@ -14694,11 +14731,6 @@ async function refreshTodoOverviewIdentity(interactive = false) {
     const identity = await resolveTodoSheetsForCurrentUser(interactive);
     todoOverviewState.userKey = normalizeTodoUserKey(identity?.userKey || googleUserProfile.localPart || '');
     todoOverviewState.hasSheets = !!identity?.hasSheets;
-
-    const userPill = document.getElementById('todoOverviewUserPill');
-    if (userPill) {
-        userPill.textContent = todoOverviewState.userKey || 'Google';
-    }
 
     const hint = document.getElementById('todoOverviewHint');
     if (hint) {
@@ -14775,6 +14807,16 @@ function collectTodoOverviewGroups(userKey = '') {
     };
 }
 
+function alignTodoOverviewModalToRight() {
+    const modalContent = document.querySelector('#todoOverviewModal .modal-content');
+    if (!modalContent) return;
+    const width = modalContent.offsetWidth || 0;
+    const margin = 16;
+    const maxX = Math.max(0, ((window.innerWidth - width) / 2) - margin);
+    todoOverviewState.modalOffsetX = maxX;
+    todoOverviewState.modalOffsetY = 0;
+}
+
 function advanceTodoOverviewRetainedDates(userKey = '', options = {}) {
     const normalizedUser = normalizeTodoUserKey(userKey || todoOverviewState.userKey || '');
     if (!normalizedUser) return;
@@ -14849,6 +14891,28 @@ async function saveTodoOverviewItemText(item, nextText = '') {
         buildTodoDateCellChanges(project, userKey, item.col, nextItems),
         '💾 Atualizando To Do...'
     );
+}
+
+async function deleteTodoOverviewItem(item) {
+    const project = projects.find((entry) => entry.name === item?.projectName);
+    if (!project) {
+        throw new Error('Projeto do To Do não encontrado.');
+    }
+
+    const userKey = normalizeTodoUserKey(item?.user || todoOverviewState.userKey || '');
+    const currentItems = getProjectTodoItems(item.projectName, { dateColumnIndex: item.col, user: userKey });
+    const nextItems = currentItems.filter((entry) => entry.id !== item.id);
+
+    await commitTodoCellChanges(
+        buildTodoDateCellChanges(project, userKey, item.col, nextItems),
+        '🗑️ Excluindo To Do...'
+    );
+
+    if (nextItems.length === 0 && item.dateValue) {
+        const retainedDates = getTodoOverviewRetainedDates(userKey);
+        retainedDates.set(item.dateValue, TODO_OVERVIEW_EMPTY_DATE_MOVES);
+        refreshTodoOverviewIfOpen();
+    }
 }
 
 async function moveTodoOverviewItem(draggedItem, options = {}) {
@@ -14952,13 +15016,31 @@ function openTodoOverviewInlineEditor(card, item) {
     input.select();
 
     let finished = false;
-    const finish = (shouldSave) => {
+    const finish = (mode = 'save') => {
         if (finished) return;
         finished = true;
         todoOverviewState.editingId = '';
         card.classList.remove('is-editing');
         const nextText = String(input.value || '').trim();
-        if (!shouldSave || !nextText || nextText === currentText) {
+        if (mode === 'cancel' || nextText === currentText) {
+            if (isTodoOverviewOpen()) {
+                renderTodoOverviewModal();
+            }
+            return;
+        }
+
+        if (mode === 'delete') {
+            deleteTodoOverviewItem(item).catch((error) => {
+                console.error('Falha ao excluir To Do na lista geral:', error);
+                showToast(error.message || 'Falha ao excluir To Do.', 'error', 2800);
+                if (isTodoOverviewOpen()) {
+                    renderTodoOverviewModal();
+                }
+            });
+            return;
+        }
+
+        if (!nextText) {
             if (isTodoOverviewOpen()) {
                 renderTodoOverviewModal();
             }
@@ -14977,13 +15059,13 @@ function openTodoOverviewInlineEditor(card, item) {
     input.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
-            finish(true);
+            finish(String(input.value || '').trim() ? 'save' : 'delete');
         } else if (event.key === 'Escape') {
             event.preventDefault();
-            finish(false);
+            finish('cancel');
         }
     });
-    input.addEventListener('blur', () => finish(true), { once: true });
+    input.addEventListener('blur', () => finish('save'), { once: true });
 }
 
 function attachTodoOverviewCardDragHandlers(card, item, dateValue) {
@@ -15149,27 +15231,40 @@ function renderTodoOverviewModal() {
     const userKey = normalizeTodoUserKey(todoOverviewState.userKey || googleUserProfile.localPart || '');
     if (!userKey) {
         list.innerHTML = '<div class="todo-empty">Faça login no Google para visualizar a lista geral de To Dos.</div>';
-        updateTodoOverviewSummary(0, 0);
+        updateTodoOverviewSummary({ total: 0, done: 0, pending: 0 });
         return;
     }
 
     if (!todoOverviewState.hasSheets) {
         list.innerHTML = `<div class="todo-empty">Não encontrei abas TODO - ${userKey} - 1 ou TODO - ${userKey} - 2.</div>`;
-        updateTodoOverviewSummary(0, 0);
+        updateTodoOverviewSummary({ total: 0, done: 0, pending: 0 });
         return;
     }
 
-    const { groups, itemCount } = collectTodoOverviewGroups(userKey);
-    updateTodoOverviewSummary(groups.length, itemCount);
+    const { groups } = collectTodoOverviewGroups(userKey);
     setTodoOverviewHint(todoOverviewState.hasSheets ? '' : `Não encontrei abas TODO - ${userKey} - 1 ou TODO - ${userKey} - 2.`);
 
-    if (groups.length === 0) {
+    const filteredGroups = groups
+        .map((group) => ({
+            ...group,
+            items: todoOverviewState.filterProjectName
+                ? group.items.filter((item) => item.projectName === todoOverviewState.filterProjectName)
+                : group.items
+        }))
+        .filter((group) => group.items.length > 0 || group.retainedMoves > 0);
+
+    const visibleItems = filteredGroups.flatMap((group) => group.items);
+    const doneCount = visibleItems.filter((item) => item.done).length;
+    const pendingCount = visibleItems.length - doneCount;
+    updateTodoOverviewSummary({ total: visibleItems.length, done: doneCount, pending: pendingCount });
+
+    if (filteredGroups.length === 0) {
         list.innerHTML = '<div class="todo-empty">Nenhum To Do entre uma semana atrás e as datas futuras da timeline.</div>';
         return;
     }
 
     list.innerHTML = '';
-    groups.forEach((group) => {
+    filteredGroups.forEach((group) => {
         const groupEl = document.createElement('section');
         groupEl.className = `todo-overview-group${group.items.length === 0 ? ' is-retained' : ''}`;
 
@@ -15184,12 +15279,12 @@ function renderTodoOverviewModal() {
         meta.className = 'todo-overview-group-meta';
         if (group.items.length === 0 && group.retainedMoves > 0) {
             meta.textContent = `Data mantida por ${group.retainedMoves} movimento${group.retainedMoves === 1 ? '' : 's'}`;
-        } else {
-            meta.textContent = `${group.items.length} item${group.items.length === 1 ? '' : 's'}`;
         }
 
         head.appendChild(title);
-        head.appendChild(meta);
+        if (meta.textContent) {
+            head.appendChild(meta);
+        }
         groupEl.appendChild(head);
 
         const groupList = document.createElement('div');
@@ -15241,6 +15336,7 @@ async function openTodoOverviewModal() {
     if (list) {
         list.innerHTML = '<div class="todo-empty">Carregando To Dos...</div>';
     }
+    todoOverviewState.filterProjectName = '';
     modal.classList.remove('hidden');
     try {
         await refreshTodoOverviewIdentity(false);
@@ -15248,6 +15344,7 @@ async function openTodoOverviewModal() {
         console.error('Falha ao identificar usuário da lista geral de To Dos:', error);
         showToast(error.message || 'Falha ao carregar a lista geral de To Dos.', 'error', 2800);
     }
+    alignTodoOverviewModalToRight();
     applyTodoOverviewModalPosition();
     renderTodoOverviewModal();
 }
