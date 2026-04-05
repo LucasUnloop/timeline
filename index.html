@@ -2276,7 +2276,7 @@ body.br-mode .br-control-indicator:hover {
     display: flex;
     flex-direction: column;
     gap: 0;
-    min-height: 14px;
+    min-height: 20px;
     padding: 2px 6px;
     border-radius: 5px;
     border: 1px solid var(--cal-todo-border, rgba(0,0,0,0.12));
@@ -3455,7 +3455,8 @@ textarea.cal-todo-input {
  	<div class="content-wrapper" id="content-wrapper">
  	 	<header class="header glass">
  	 	 	<div class="header-content">
-			<h1 class="header-title" id="header-title">🎞️ Timeline Unloop</h1>
+            <h1 class="header-title" id="header-title" title="Abrir planilha">🎞️ Timeline Unloop</h1>
+            <a href="https://docs.google.com/spreadsheets/d/1lpA82i_X-Wbk-T-hxHBywtYEbzqDP-BYM5LW7qb60MM/edit#gid=0" target="_blank" id="sheetLink" hidden aria-hidden="true" tabindex="-1"></a>
  	 	 	 	<div class="controls">
  	 	 	 	 	<div class="update-indicator" id="updateIndicator">✅ Atualizado</div>
                     <button class="control-btn" id="refreshDataBtn" onclick="handleRefreshData()" aria-label="Atualizar dados da planilha" title="Atualizar dados da planilha">🔄</button>
@@ -3499,7 +3500,6 @@ textarea.cal-todo-input {
      	 	 	 	 	<button class="control-btn edit-mode-btn" id="editModeBtn" onclick="toggleEditMode()" aria-label="Salvar Edições" style="display:none">✏️</button>
                        <button class="control-btn" id="addProjectBtn" aria-label="Configurar projeto" title="Configurar Projeto">+</button>
         	 	 	 	<button class="control-btn" id="calendarOpenBtn" onclick="openCalendarModal()" aria-label="Abrir calendário" title="Abrir Calendário">📆</button>
-     	 	 	 	<a href="https://docs.google.com/spreadsheets/d/1lpA82i_X-Wbk-T-hxHBywtYEbzqDP-BYM5LW7qb60MM/edit#gid=0" target="_blank" class="control-btn" id="sheetLink" aria-label="Abrir planilha no Google Sheets" title="Abrir Planilha">📊</a>
  	 	 	 	</div>
  	 	 	</div>
                 <div class="flag-icon" id="flag-icon">🇧🇷</div>
@@ -3538,7 +3538,7 @@ textarea.cal-todo-input {
  	 	 	 	<ul>
                     <li>🔄 <b>Atualizar Dados:</b> Recarrega todas as configurações e tarefas da planilha sem atualizar a página.</li>
                     <li>✨ <b>Otimização:</b> Liga/desliga efeitos visuais pesados para melhorar a performance.</li>
- 	 	 	 	 	<li>📅 <b>Planilha:</b> Abre o Google Sheets correspondente.</li>
+     	 	 		<li>🎞️ <b>Título Timeline Unloop:</b> Abre o Google Sheets correspondente.</li>
  	 	 	 	 	<li>🔑 <b>Script:</b> Após editar, clique em ✏️ novamente para desativar. Um código será copiado. Cole e execute esse código no Editor de Scripts do Google para salvar as mudanças.</li>
  	 	 	 	 	<li>🗂️ <b>Reset:</b> Limpa todos os filtros aplicados e alterna a expansão dos projetos.</li>
  	 	 	 	 	<li><b>Filtros (Projetos, Clientes, etc.):</b> Clique para selecionar/desselecionar itens. A lógica pode variar (seleção múltipla ou única).</li>
@@ -3566,7 +3566,7 @@ textarea.cal-todo-input {
                 <h2>Configurar Novo Projeto</h2>
                 <div class="input-group">
                     <input type="text" id="configProjectName" required placeholder=" ">
-                    <span class="ghost-placeholder">(xxxx_NOME-DO-PROJETO)</span>
+                    <span class="ghost-placeholder">(xxxx - Nome do projeto)</span>
                 </div>
                 <div class="input-group">
                     <input type="text" id="configClientName" required placeholder=" ">
@@ -3580,10 +3580,6 @@ textarea.cal-todo-input {
                    <div class="form-group">
                        <input type="color" id="configMainColor" value="#999999">
                    </div>
-                </div>
-                 <div class="options-group">
-                    <button class="option-box-btn" id="createInSheetBtn">Criar na Planilha</button>
-                    <button class="option-box-btn" id="createInDriveBtn">Criar Pasta no Drive</button>
                 </div>
                 <div class="button-group">
                     <button id="generateScriptBtn" class="control-btn generate-btn">Salvar Ação</button>
@@ -3730,7 +3726,8 @@ const EMBEDDED_HTML_TEMPLATE = `<!DOCTYPE html>
  	<div class="content-wrapper" id="content-wrapper">
  	 	<header class="header glass">
  	 	 	<div class="header-content">
-                  <h1 class="header-title" id="header-title">🎞️ Timeline Unloop</h1>
+                  <h1 class="header-title" id="header-title" title="Abrir planilha">🎞️ Timeline Unloop</h1>
+                  <a href="https://docs.google.com/spreadsheets/d/1lpA82i_X-Wbk-T-hxHBywtYEbzqDP-BYM5LW7qb60MM/edit#gid=0" target="_blank" id="sheetLink" hidden aria-hidden="true" tabindex="-1"></a>
  	 	 	 	<div class="controls">
  	 	 	 	 	<div class="update-indicator" id="updateIndicator">✅ Atualizado</div>
                     <button class="control-btn" id="refreshDataBtn" onclick="handleRefreshData()" aria-label="Atualizar dados da planilha" title="Atualizar dados da planilha">🔄</button>
@@ -3772,7 +3769,6 @@ const EMBEDDED_HTML_TEMPLATE = `<!DOCTYPE html>
      	 	 	 	 	 	<button class="control-btn edit-mode-btn" id="editModeBtn" onclick="toggleEditMode()" aria-label="Ativar/Desativar Modo de Edição" title="Ativar/Desativar Modo de Edição" style="display:none">✏️</button>
                        <button class="control-btn" id="addProjectBtn" aria-label="Configurar projeto" title="Configurar Projeto">+</button>
         	 	 	 	 	<button class="control-btn" id="calendarOpenBtn" onclick="openCalendarModal()" aria-label="Abrir calendário" title="Abrir Calendário">📆</button>
-     	 	 	 		<a href="https://docs.google.com/spreadsheets/d/1lpA82i_X-Wbk-T-hxHBywtYEbzqDP-BYM5LW7qb60MM/edit#gid=0" target="_blank" class="control-btn" id="sheetLink" aria-label="Abrir planilha no Google Sheets" title="Abrir Planilha">📊</a>
  	 	 	 	 	</div>
  	 	 	 	</div>
                 <div class="flag-icon" id="flag-icon">🇧🇷</div>
@@ -3795,7 +3791,7 @@ const EMBEDDED_HTML_TEMPLATE = `<!DOCTYPE html>
                 <h2>Configurar Novo Projeto</h2>
                 <div class="input-group">
                     <input type="text" id="configProjectName" required placeholder=" ">
-                    <span class="ghost-placeholder">(xxxx_NOME-DO-PROJETO)</span>
+                    <span class="ghost-placeholder">(xxxx - Nome do projeto)</span>
                 </div>
                 <div class="input-group">
                     <input type="text" id="configClientName" required placeholder=" ">
@@ -3809,10 +3805,6 @@ const EMBEDDED_HTML_TEMPLATE = `<!DOCTYPE html>
                    <div class="form-group">
                        <input type="color" id="configMainColor" value="#999999">
                    </div>
-                </div>
-                 <div class="options-group">
-                    <button class="option-box-btn" id="createInSheetBtn">Criar na Planilha</button>
-                    <button class="option-box-btn" id="createInDriveBtn">Criar Pasta no Drive</button>
                 </div>
                 <div class="button-group">
                     <button id="generateScriptBtn" class="control-btn generate-btn">Salvar Ação</button>
@@ -5314,6 +5306,16 @@ function normalizeProjectNameValue(name = '') {
     return String(name || '').trim().toLowerCase();
 }
 
+function findProjectBlockByName(projectName, root = document) {
+    const normalized = String(projectName || '').trim();
+    if (!normalized) return null;
+
+    const searchRoot = root && typeof root.querySelectorAll === 'function' ? root : document;
+    return Array.from(searchRoot.querySelectorAll('.project-block')).find((block) => (
+        String(block?.dataset?.projectName || '').trim() === normalized
+    )) || null;
+}
+
 function normalizeHexColorInput(value = '') {
     const raw = String(value || '').trim();
     const match = raw.match(/^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/);
@@ -5324,6 +5326,86 @@ function normalizeHexColorInput(value = '') {
         hex = hex.split('').map(char => char + char).join('');
     }
     return `#${hex}`;
+}
+
+function pickHexColor(initialColor = '#999999') {
+    const normalizedInitial = normalizeHexColorInput(initialColor) || '#999999';
+    return new Promise((resolve) => {
+        const input = document.createElement('input');
+        input.type = 'color';
+        input.value = normalizedInitial;
+        input.tabIndex = -1;
+        input.setAttribute('aria-hidden', 'true');
+        input.style.position = 'fixed';
+        input.style.left = '-9999px';
+        input.style.top = '-9999px';
+        input.style.opacity = '0';
+        input.style.pointerEvents = 'none';
+
+        let settled = false;
+        let changed = false;
+
+        const finish = (value = '') => {
+            if (settled) return;
+            settled = true;
+            if (input.parentNode) {
+                input.parentNode.removeChild(input);
+            }
+            resolve(value);
+        };
+
+        input.addEventListener('input', () => {
+            changed = true;
+        });
+
+        input.addEventListener('change', () => {
+            finish(normalizeHexColorInput(input.value) || '');
+        }, { once: true });
+
+        input.addEventListener('blur', () => {
+            window.setTimeout(() => {
+                finish(changed ? (normalizeHexColorInput(input.value) || '') : '');
+            }, 0);
+        }, { once: true });
+
+        document.body.appendChild(input);
+
+        try {
+            if (typeof input.showPicker === 'function') {
+                input.showPicker();
+            } else {
+                input.click();
+            }
+        } catch (_) {
+            try {
+                input.click();
+            } catch (_) {
+                finish('');
+            }
+        }
+    });
+}
+
+function openSheetLinkFromHeader(event = null) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    const sheetLink = document.getElementById('sheetLink');
+    if (!sheetLink) return;
+
+    const href = String(sheetLink.getAttribute('href') || sheetLink.href || '').trim();
+    if (!href) return;
+
+    try {
+        const openedWindow = window.open(href, sheetLink.getAttribute('target') || '_blank', 'noopener,noreferrer');
+        if (openedWindow) return;
+    } catch (_) {}
+
+    if (typeof sheetLink.click === 'function') {
+        sheetLink.click();
+    }
 }
 
 function isTodoUserSheet(sheetName = '') {
@@ -5808,6 +5890,12 @@ async function requestProjectColorChange(project) {
         return;
     }
 
+    const currentColor = normalizeHexColorInput(project.color || '#999999') || '#999999';
+    const newColor = await pickHexColor(currentColor);
+    if (!newColor || newColor === currentColor) {
+        return;
+    }
+
     try {
         await ensureGoogleAccessToken(true);
     } catch (error) {
@@ -5817,20 +5905,6 @@ async function requestProjectColorChange(project) {
         } else {
             showToast(message || 'Falha ao autenticar com Google antes de editar a cor do projeto.', 'error', 3200);
         }
-        return;
-    }
-
-    const currentColor = normalizeHexColorInput(project.color || '#999999') || '#999999';
-    const promptedColor = window.prompt('Nova cor do projeto (#RRGGBB):', currentColor);
-    if (promptedColor === null) return;
-
-    const newColor = normalizeHexColorInput(promptedColor);
-    if (!newColor) {
-        showToast('Use uma cor hexadecimal valida, por exemplo #4F8A3C.', 'warning', 2600);
-        return;
-    }
-
-    if (newColor === currentColor) {
         return;
     }
 
@@ -5997,7 +6071,7 @@ function showProjectContextMenu(project, event) {
 
     const renameButton = document.createElement('button');
     renameButton.type = 'button';
-    renameButton.textContent = project.isSpecial ? 'Projeto especial nao pode ter nome editado' : `Editar nome de ${project.name}`;
+    renameButton.textContent = 'Editar nome';
     renameButton.disabled = !!project.isSpecial;
     renameButton.addEventListener('click', async (clickEvent) => {
         clickEvent.stopPropagation();
@@ -6008,7 +6082,7 @@ function showProjectContextMenu(project, event) {
 
     const colorButton = document.createElement('button');
     colorButton.type = 'button';
-    colorButton.textContent = project.isSpecial ? 'Projeto especial nao pode ter cor editada' : `Editar cor de ${project.name}`;
+    colorButton.textContent = 'Editar cor';
     colorButton.disabled = !!project.isSpecial;
     colorButton.addEventListener('click', async (clickEvent) => {
         clickEvent.stopPropagation();
@@ -6020,7 +6094,7 @@ function showProjectContextMenu(project, event) {
     const deleteButton = document.createElement('button');
     deleteButton.type = 'button';
     deleteButton.className = 'danger';
-    deleteButton.textContent = project.isSpecial ? 'Projeto especial não pode ser excluído' : `Excluir projeto ${project.name}`;
+    deleteButton.textContent = 'Excluir projeto';
     deleteButton.disabled = !!project.isSpecial;
     deleteButton.addEventListener('click', async (clickEvent) => {
         clickEvent.stopPropagation();
@@ -10393,7 +10467,7 @@ function renderTimelineContent(targetProjectName = null) {
         : projectsToRender;
 
     if (isTargeted && renderTargets.length === 0) {
-        const orphanBlock = timeline.querySelector(`.project-block[data-project-name="${targetProjectName}"]`);
+        const orphanBlock = findProjectBlockByName(targetProjectName, timeline);
         if (orphanBlock) {
             orphanBlock.remove();
         }
@@ -10462,7 +10536,7 @@ function renderTimelineContent(targetProjectName = null) {
     
     if (window.forceStripingUpdate) {
         if (isTargeted) {
-            const targetBlock = document.querySelector(`.project-block[data-project-name="${targetProjectName}"]`);
+            const targetBlock = findProjectBlockByName(targetProjectName);
             if (targetBlock) {
                 recomputeRowStriping(targetBlock);
             }
@@ -10489,6 +10563,21 @@ function updateTimelineLayoutWidth() {
     document.getElementById('timeline-header-group').style.width = `${totalWidth + Math.round(sidebarWidth)}px`;
 }
 
+function setProjectInfoContent(projectInfoEl, project) {
+    if (!projectInfoEl || !project) return;
+
+    projectInfoEl.textContent = '';
+    projectInfoEl.appendChild(document.createTextNode(String(project.name || '').trim()));
+
+    if (project.isSpecial) return;
+
+    const clientEl = document.createElement('span');
+    clientEl.className = 'client-name';
+    clientEl.textContent = `- ${String(project.client || '').trim() || 'N/A'}`;
+    projectInfoEl.appendChild(document.createTextNode(' '));
+    projectInfoEl.appendChild(clientEl);
+}
+
 function applyProjectBlockHeaderVisuals(projectBlock, project) {
     if (!projectBlock || !project) return;
 
@@ -10507,9 +10596,7 @@ function applyProjectBlockHeaderVisuals(projectBlock, project) {
 
     const infoEl = projectBlock.querySelector('.project-info');
     if (infoEl) {
-        infoEl.innerHTML = project.isSpecial
-            ? `${project.name}`
-            : `${project.name} <span class="client-name">- ${project.client}</span>`;
+        setProjectInfoContent(infoEl, project);
     }
 
     try {
@@ -10567,9 +10654,6 @@ function createProjectBlock(project) {
         projectBlock.classList.add('expanded');
     }
 
-    const infoHtml = project.isSpecial
-        ? `${project.name}`
-        : `${project.name} <span class="client-name">- ${project.client}</span>`;
     projectBlock.innerHTML = `
         <div class="project-header">
             <div class="project-header-fixed">
@@ -10577,7 +10661,7 @@ function createProjectBlock(project) {
                     <div class="project-color" style="background-color: ${project.color}; color: ${project.color};"></div>
                     <div class="project-color-click-area"></div>
                 </div>
-                <span class="project-info">${infoHtml}</span>
+                <span class="project-info"></span>
             </div>
         </div>
         <div class="project-content"></div>`;
@@ -12185,8 +12269,8 @@ function setupEventListeners() {
         }
     });
 
-    // Header title now resets filters and view
-    bind('header-title', 'click', () => { resetAllFilters(true); animateToToday(Number(config.atrasoRolagemAgulha ?? 1500) || 1500); });
+    // Header title now opens the Google Sheet
+    bind('header-title', 'click', openSheetLinkFromHeader);
     bind('main-container', 'click', handleBackgroundClick);
     // Removido forwarding global no content-wrapper para evitar conflitos de clique.
     bind('flag-icon', 'click', toggleBrMode);
@@ -12663,17 +12747,6 @@ function populateNoticeBoard() {
             }
         };
     }
-// Clique no header-title remove isolamento de projetos e classe active do botão
-document.addEventListener('DOMContentLoaded', () => {
-    const headerTitle = document.getElementById('header-title');
-    if (headerTitle) {
-        headerTitle.addEventListener('click', () => {
-            if (typeof clearProjectIsolation === 'function') {
-                clearProjectIsolation();
-            }
-        });
-    }
-});
 }
 function zoomIn() { adjustScrollForZoom(() => { columnWidth = Math.min(columnWidth * 1.2, 120); }); }
 function zoomOut() { adjustScrollForZoom(() => { columnWidth = Math.max(5, columnWidth / 1.2); }); }
@@ -14660,8 +14733,7 @@ function closeTodoModal() {
 
     if (closingProjectName) {
         const closingProject = projects.find((item) => item.name === closingProjectName);
-        const selectorName = (window.CSS?.escape ? window.CSS.escape(closingProjectName) : closingProjectName.replace(/"/g, '\\"'));
-        const projectBlock = document.querySelector(`.project-block[data-project-name="${selectorName}"]`);
+        const projectBlock = findProjectBlockByName(closingProjectName);
         if (projectBlock && closingProject) {
             updateProjectContent(projectBlock, closingProject, true);
         }
@@ -15919,8 +15991,8 @@ function setupProjectConfiguratorListeners() {
     const addProjectBtn = document.getElementById('addProjectBtn');
     const closeBtn = document.getElementById('closeConfigModalBtn');
     const generateBtn = document.getElementById('generateScriptBtn');
-    const sheetBtn = document.getElementById('createInSheetBtn');
-    const driveBtn = document.getElementById('createInDriveBtn');
+
+    if (!modal || !addProjectBtn || !closeBtn || !generateBtn) return;
 
     addProjectBtn.addEventListener('click', () => {
         modal.classList.remove('hidden');
@@ -15942,13 +16014,6 @@ function setupProjectConfiguratorListeners() {
         modal.classList.add('hidden');
         document.getElementById('content-wrapper').classList.remove('blurred');
     });
-    
-    [sheetBtn, driveBtn].forEach(btn => {
-        btn.addEventListener('click', () => {
-            btn.classList.toggle('active');
-        });
-    });
-
 
     generateBtn.addEventListener('click', () => {
         const projectName = document.getElementById('configProjectName').value.trim();
@@ -15961,40 +16026,22 @@ function setupProjectConfiguratorListeners() {
             return;
         }
 
-        let actionTaken = false;
-        if (sheetBtn.classList.contains('active')) {
-            userActionCount++;
-            actionHistory.push({
-                type: 'newProject',
-                details: { projectName, clientName, location: city, mainColor }
-            });
-            actionTaken = true;
-        }
-        if (driveBtn.classList.contains('active')) {
-            userActionCount++;
-            actionHistory.push({
-                type: 'newDriveFolder',
-                details: { projectName }
-            });
-            actionTaken = true;
-        }
-        
-        if (actionTaken) {
-            updateEditButtonState();
-            saveStateToCache();
-            handlePendingActionsChanged();
-            
-            modal.classList.add('hidden');
-            document.getElementById('content-wrapper').classList.remove('blurred');
-            
-            document.getElementById('configProjectName').value = '';
-            document.getElementById('configClientName').value = '';
-            document.getElementById('configCity').value = '';
-            sheetBtn.classList.remove('active');
-            driveBtn.classList.remove('active');
-        } else {
-            alert('Selecione pelo menos uma ação (Criar na Planilha ou Criar Pasta no Drive).');
-        }
+        userActionCount++;
+        actionHistory.push({
+            type: 'newProject',
+            details: { projectName, clientName, location: city, mainColor }
+        });
+
+        updateEditButtonState();
+        saveStateToCache();
+        handlePendingActionsChanged();
+
+        modal.classList.add('hidden');
+        document.getElementById('content-wrapper').classList.remove('blurred');
+
+        document.getElementById('configProjectName').value = '';
+        document.getElementById('configClientName').value = '';
+        document.getElementById('configCity').value = '';
     });
 }
 
@@ -16394,6 +16441,7 @@ function handleUndo(e) {
 function undoLastAction() {
     if (actionHistory.length === 0) return;
     const lastAction = actionHistory.pop();
+    const undoneTodoAction = isTodoEditAction(lastAction);
     userActionCount--;
     
     if(['edit', 'move', 'duplicate'].includes(lastAction.type)) {
@@ -16418,8 +16466,18 @@ function undoLastAction() {
     }
 
     parseData();
+    if (undoneTodoAction) {
+        parseTodoData();
+    }
     setupFilters();
     renderTimeline();
+    if (undoneTodoAction) {
+        if (typeof window.refreshOpenCalendarModal === 'function') {
+            Promise.resolve(window.refreshOpenCalendarModal()).catch(() => {});
+        }
+        renderTodoModalList();
+        refreshTodoOverviewIfOpen();
+    }
     updateEditButtonState();
     saveStateToCache();
     handlePendingActionsChanged();
@@ -17930,7 +17988,7 @@ async function fetchWeatherForProject(project) {
         
         weatherData[projectName] = projectWeatherData;
         
-        const projectBlock = document.querySelector(`.project-block[data-project-name="${CSS.escape(projectName)}"]`);
+        const projectBlock = findProjectBlockByName(projectName);
         if (projectBlock) {
             updateProjectContent(projectBlock, project);
         }
@@ -18362,7 +18420,9 @@ function getWeatherIcon(weatherCode) {
 
         const pill = document.createElement('div');
         pill.className = 'cal-todo-project-pill';
-        pill.innerHTML = `<span>${selectedProject.name}</span>`;
+        const pillLabel = document.createElement('span');
+        pillLabel.textContent = selectedProject.name;
+        pill.appendChild(pillLabel);
 
         const swapBtn = document.createElement('button');
         swapBtn.type = 'button';
@@ -19640,4 +19700,3 @@ function getWeatherIcon(weatherCode) {
 </script>
 </body>
 </html>
-
