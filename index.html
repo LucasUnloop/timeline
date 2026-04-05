@@ -14334,6 +14334,7 @@ async function deleteTodoItem(item) {
     const userKey = normalizeTodoUserKey(item.user || activeTodoContext.userKey || '');
     const currentItems = getProjectTodoItems(item.projectName, { dateColumnIndex: item.col, user: userKey });
     const nextItems = currentItems.filter((entry) => entry.id !== item.id);
+    const dateValue = String(item.dateValue || getTodoDateValueByColumnIndex(item.col) || '').trim();
     const deleted = await commitTodoCellChanges(
         buildTodoDateCellChanges(project, userKey, item.col, nextItems),
         '🗑️ Excluindo To Do...'
@@ -14342,6 +14343,12 @@ async function deleteTodoItem(item) {
     if (deleted && activeTodoContext.editing?.id === item.id) {
         resetTodoForm({ preserveDate: true });
         renderTodoModalList();
+    }
+
+    if (deleted && nextItems.length === 0 && dateValue) {
+        const retainedDates = getTodoOverviewRetainedDates(userKey);
+        retainedDates.set(dateValue, TODO_OVERVIEW_EMPTY_DATE_MOVES);
+        refreshTodoOverviewIfOpen();
     }
 }
 
@@ -14451,10 +14458,21 @@ async function reorderTodoItemsInCell(draggedItem, targetItem, place = 'before')
     const [movedItem] = nextItems.splice(fromIndex, 1);
     nextItems.splice(Math.max(0, toIndex), 0, movedItem);
 
-    await commitTodoCellChanges(
+    const saved = await commitTodoCellChanges(
         buildTodoDateCellChanges(project, userKey, draggedItem.col, nextItems),
         '↕️ Reordenando To Do...'
     );
+
+    if (!saved) return;
+
+    const dateValue = String(draggedItem.dateValue || getTodoDateValueByColumnIndex(draggedItem.col) || '').trim();
+    advanceTodoOverviewRetainedDates(userKey, {
+        sourceDateValue: dateValue,
+        sourceCountAfter: nextItems.length,
+        targetDateValue: dateValue,
+        countMovement: true
+    });
+    refreshTodoOverviewIfOpen();
 }
 
 function attachTodoCardDragHandlers(card, item) {
@@ -14683,6 +14701,10 @@ async function persistTodoDraft(mode = 'add') {
     };
 
     const changes = [];
+    const sourceDateValue = editingItem
+        ? String(editingItem.dateValue || getTodoDateValueByColumnIndex(editingItem.col) || '').trim()
+        : '';
+    let sourceItemsAfterMove = null;
     if (editingItem) {
         if (editingItem.col === targetCol) {
             const nextItems = getProjectTodoItems(projectName, { dateColumnIndex: targetCol, user: userKey })
@@ -14697,6 +14719,7 @@ async function persistTodoDraft(mode = 'add') {
                 throw new Error(buildTodoCapacityMessage(project.name, dateValue, targetSlots.length));
             }
             targetItems.push(todoItem);
+            sourceItemsAfterMove = sourceItems;
             changes.push(...buildTodoDateCellChanges(project, userKey, editingItem.col, sourceItems));
             changes.push(...buildTodoDateCellChanges(project, userKey, targetCol, targetItems));
         }
@@ -14712,6 +14735,16 @@ async function persistTodoDraft(mode = 'add') {
 
     const saved = await commitTodoCellChanges(changes, editingItem ? '💾 Atualizando To Do...' : '💾 Criando To Do...');
     if (!saved) return false;
+
+    if (editingItem && editingItem.col !== targetCol) {
+        advanceTodoOverviewRetainedDates(userKey, {
+            sourceDateValue,
+            sourceCountAfter: Array.isArray(sourceItemsAfterMove) ? sourceItemsAfterMove.length : 0,
+            targetDateValue: dateValue,
+            countMovement: true
+        });
+        refreshTodoOverviewIfOpen();
+    }
 
     activeTodoContext.dateColumnIndex = targetCol;
     syncActiveTodoEditingReference();
@@ -15049,7 +15082,6 @@ function ensureTodoOverviewModal() {
 function setTodoOverviewHint(message = '') {
     const hint = document.getElementById('todoOverviewHint');
     if (!hint) return;
-    const todayDateValue = new Date().toISOString().split('T')[0];
     const text = String(message || '').trim();
     hint.textContent = text;
     hint.classList.toggle('hidden', !text);
@@ -15059,9 +15091,6 @@ function clampTodoOverviewModalOffsets(offsetX = 0, offsetY = 0) {
     const modalContent = document.querySelector('#todoOverviewModal .modal-content');
     if (!modalContent) {
         return { x: offsetX, y: offsetY };
-        if (group.dateValue === todayDateValue) {
-            groupEl.classList.add('is-today');
-        }
     }
 
     const width = modalContent.offsetWidth || 0;
@@ -15508,6 +15537,10 @@ async function moveTodoOverviewItem(draggedItem, options = {}) {
         changes.push(...buildTodoDateCellChanges(project, userKey, targetCol, targetItems));
     }
 
+    const sourceCountAfter = targetCol === sourceCol
+        ? targetItems.length
+        : (shouldDuplicate ? sourceBaseItems.length : sourceItems.length);
+
     await commitTodoCellChanges(
         changes,
         shouldDuplicate
@@ -15515,15 +15548,13 @@ async function moveTodoOverviewItem(draggedItem, options = {}) {
             : (targetCol === sourceCol ? '↕️ Reordenando To Do...' : '📆 Movendo To Do...')
     );
 
-    if (targetDateValue !== draggedItem.dateValue) {
-        advanceTodoOverviewRetainedDates(userKey, {
-            sourceDateValue: draggedItem.dateValue,
-            sourceCountAfter: shouldDuplicate ? sourceBaseItems.length : sourceItems.length,
-            targetDateValue,
-            countMovement: true
-        });
-        refreshTodoOverviewIfOpen();
-    }
+    advanceTodoOverviewRetainedDates(userKey, {
+        sourceDateValue: String(draggedItem.dateValue || '').trim(),
+        sourceCountAfter,
+        targetDateValue,
+        countMovement: true
+    });
+    refreshTodoOverviewIfOpen();
 }
 
 function openTodoOverviewInlineEditor(card, item) {
@@ -15822,11 +15853,15 @@ function renderTodoOverviewModal() {
         return;
     }
 
+    const todayDateValue = new Date().toISOString().split('T')[0];
     list.innerHTML = '';
     filteredGroups.forEach((group) => {
         const groupEl = document.createElement('section');
         groupEl.className = `todo-overview-group${group.items.length === 0 && group.dateNotes.length === 0 ? ' is-retained' : ''}`;
         groupEl.dataset.dateKey = group.dateValue;
+        if (group.dateValue === todayDateValue) {
+            groupEl.classList.add('is-today');
+        }
 
         const head = document.createElement('div');
         head.className = 'todo-overview-group-head';
@@ -18338,7 +18373,6 @@ function getWeatherIcon(weatherCode) {
 
         const closeBtn = document.createElement('button');
         closeBtn.type = 'button';
-        closeBtn.className = 'cal-todo-composer-close';
         closeBtn.setAttribute('aria-label', 'Fechar criacao de To Do');
         closeBtn.textContent = '×';
         closeBtn.addEventListener('click', () => closeCalendarTodoComposer());
@@ -19144,12 +19178,24 @@ function getWeatherIcon(weatherCode) {
             changes.push(...buildTodoDateCellChanges(project, userKey, targetCol, targetItems));
         }
 
+        const sourceCountAfter = targetCol === sourceCol
+            ? targetItems.length
+            : (shouldDuplicate ? sourceBaseItems.length : sourceItems.length);
+
         await commitTodoCellChanges(
             changes,
             shouldDuplicate
                 ? '📄 Duplicando To Do...'
                 : (targetCol === sourceCol ? '↕️ Reordenando To Do...' : '📆 Movendo To Do...')
         );
+
+        advanceTodoOverviewRetainedDates(userKey, {
+            sourceDateValue: String(draggedItem.dateValue || '').trim(),
+            sourceCountAfter,
+            targetDateValue,
+            countMovement: true
+        });
+        refreshTodoOverviewIfOpen();
     }
 
     function openCalendarTodoInlineEditor(card, item) {
