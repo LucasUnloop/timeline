@@ -1204,6 +1204,17 @@ body.br-mode .tooltip, body.br-mode .drag-tooltip {
 .loading-overlay.hidden {
     display: none;
 }
+
+.loading-overlay.login-clickable,
+.loading-overlay.login-clickable #logo-canvas {
+    cursor: pointer;
+}
+
+.loading-overlay.login-pending,
+.loading-overlay.login-pending #logo-canvas {
+    cursor: wait;
+}
+
 #logo-canvas {
     width: 100%;
     height: 100%;
@@ -1220,11 +1231,16 @@ body.br-mode .tooltip, body.br-mode .drag-tooltip {
     font-size: var(--loading-status-font-size, 0.55rem);
     font-weight: 300;
     margin-top: 20px;
-    height: 20px;
+    min-height: 20px;
+    width: min(360px, calc(100vw - 40px));
+    height: auto;
+    line-height: 1.45;
+    text-align: center;
     text-shadow: 0 1px 3px rgba(0,0,0,0.5);
     transform: translateY(38px);
     position: relative;
     z-index: 2;
+    pointer-events: none;
 }
 
 .loading-overlay-actions {
@@ -4657,21 +4673,33 @@ body.br-mode .br-mode-overlay {
 /* Tooltip */
 .tooltip, .drag-tooltip {
     position: fixed;
-    background-color: rgba(0,0,0,0.8);
+    background-color: rgba(0,0,0,0.88);
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff !important;
     text-shadow: 0 1px 2px rgba(0,0,0,0.45);
     padding: 5px 10px;
     border-radius: 4px;
     font-size: 12px;
-    z-index: 10000;
+    z-index: 60000;
     pointer-events: none;
     white-space: pre-line;
     max-width: 60vw;
     opacity: 0;
     transform: translate(-50%, -120%);
     transition: opacity 0.2s, transform 0.2s;
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.28);
 }
+
+body.br-mode .tooltip,
+body.br-mode .drag-tooltip {
+    background-color: rgba(0,0,0,0.92);
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.55);
+    border-color: rgba(255,255,255,0.18);
+}
+
 .tooltip.visible, .drag-tooltip.visible {
     opacity: 1;
     transform: translate(-50%, -130%);
@@ -6158,23 +6186,14 @@ async function handleGoogleAuthButtonClick() {
 
 function ensureInitialLoginPromptElements() {
     const overlay = document.getElementById('loading-overlay');
-    if (!overlay) return {};
+    const loadingStatusText = document.getElementById('loading-status-text');
+    if (!overlay || !loadingStatusText) return {};
 
-    let actions = overlay.querySelector('.loading-overlay-actions');
-    if (!actions) {
-        actions = document.createElement('div');
-        actions.className = 'loading-overlay-actions hidden';
-        actions.innerHTML = `
-            <button type="button" class="loading-login-btn" id="initialGoogleLoginBtn">Entrar com Google</button>
-            <div class="loading-login-note" id="initialGoogleLoginNote">Faça login antes de carregar a timeline.</div>
-        `;
-        overlay.appendChild(actions);
-    }
+    overlay.querySelector('.loading-overlay-actions')?.remove();
 
     return {
-        actions,
-        button: actions.querySelector('#initialGoogleLoginBtn'),
-        note: actions.querySelector('#initialGoogleLoginNote')
+        overlay,
+        loadingStatusText
     };
 }
 
@@ -6192,37 +6211,58 @@ async function requireInitialGoogleLogin() {
         throw new Error('O login Google exige HTTPS ou localhost para abrir a timeline.');
     }
 
-    const loadingStatusText = document.getElementById('loading-status-text');
-    const { actions, button, note } = ensureInitialLoginPromptElements();
-    if (!actions || !button || !note) {
+    const { overlay, loadingStatusText } = ensureInitialLoginPromptElements();
+    if (!overlay || !loadingStatusText) {
         throw new Error('Nao foi possivel montar a tela inicial de login.');
     }
 
-    if (loadingStatusText) {
-        loadingStatusText.textContent = '';
-    }
-    note.textContent = 'Entre com sua conta Google para continuar';
-    actions.classList.remove('hidden');
+    loadingStatusText.textContent = 'Clique na animacao inicial para entrar com Google.';
+    overlay.classList.add('login-clickable');
+    overlay.classList.remove('login-pending');
+    overlay.setAttribute('tabindex', '0');
+    overlay.setAttribute('role', 'button');
+    overlay.setAttribute('aria-label', 'Clique na animacao inicial para entrar com Google');
 
     return new Promise((resolve, reject) => {
-        const handleClick = async () => {
-            button.disabled = true;
-            note.textContent = 'Abrindo login do Google...';
+        let authInFlight = false;
+
+        const cleanup = () => {
+            overlay.classList.remove('login-clickable', 'login-pending');
+            overlay.removeEventListener('click', handleActivate);
+            overlay.removeEventListener('keydown', handleActivate);
+            overlay.removeAttribute('tabindex');
+            overlay.removeAttribute('role');
+            overlay.removeAttribute('aria-label');
+        };
+
+        const handleActivate = async (event) => {
+            if (event?.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') {
+                return;
+            }
+            if (authInFlight) return;
+
+            event?.preventDefault?.();
+            event?.stopPropagation?.();
+
+            authInFlight = true;
+            overlay.classList.remove('login-clickable');
+            overlay.classList.add('login-pending');
+            loadingStatusText.textContent = 'Abrindo login do Google...';
             try {
                 await ensureGoogleAccessToken(true, GOOGLE_CORE_OAUTH_SCOPES, false);
                 await fetchGoogleUserProfile(false).catch(() => {});
-                actions.classList.add('hidden');
-                button.disabled = false;
+                cleanup();
                 resolve(true);
             } catch (error) {
-                button.disabled = false;
-                note.textContent = error.message || 'Falha ao autenticar. Clique para tentar novamente.';
+                authInFlight = false;
+                overlay.classList.remove('login-pending');
+                overlay.classList.add('login-clickable');
+                loadingStatusText.textContent = `${error.message || 'Falha ao autenticar.'} Clique na animacao para tentar novamente.`;
             }
         };
 
-        button.onclick = () => {
-            handleClick().catch((error) => reject(error));
-        };
+        overlay.addEventListener('click', handleActivate);
+        overlay.addEventListener('keydown', handleActivate);
     });
 }
 
@@ -7771,7 +7811,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await requireInitialGoogleLogin();
 
         loadingStatusText.textContent = 'Conectando com a planilha...';
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 100));
 
         await loadData();
         if (!rawSheetData || rawSheetData.length === 0) {
