@@ -3025,15 +3025,22 @@ textarea.cal-todo-input {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    justify-content: flex-start;
     width: 100%;
-    text-align: left;
+    text-align: left !important;
     align-self: flex-start;
     margin-right: auto;
 }
 
+#todoOverviewModal .todo-overview-heading {
+    align-items: flex-start;
+    justify-content: flex-start;
+    text-align: left !important;
+}
+
 #todoOverviewModal .todo-overview-heading small {
     width: 100%;
-    text-align: left;
+    text-align: left !important;
     margin-left: 0;
     margin-right: auto;
 }
@@ -3126,6 +3133,11 @@ textarea.cal-todo-input {
     border: 1px solid rgba(255,255,255,0.12);
 }
 
+.todo-overview-group.is-today {
+    border-color: rgba(0,0,0,0.96);
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.96);
+}
+
 .todo-overview-group.is-retained {
     border-style: dashed;
 }
@@ -3168,7 +3180,7 @@ textarea.cal-todo-input {
     display: flex;
     align-items: flex-start;
     gap: 8px;
-    font-size: 10px;
+    font-size: 11.7px;
     line-height: 1.22;
     color: rgba(238,244,248,0.76);
 }
@@ -15034,6 +15046,7 @@ function ensureTodoOverviewModal() {
 function setTodoOverviewHint(message = '') {
     const hint = document.getElementById('todoOverviewHint');
     if (!hint) return;
+    const todayDateValue = new Date().toISOString().split('T')[0];
     const text = String(message || '').trim();
     hint.textContent = text;
     hint.classList.toggle('hidden', !text);
@@ -15043,6 +15056,9 @@ function clampTodoOverviewModalOffsets(offsetX = 0, offsetY = 0) {
     const modalContent = document.querySelector('#todoOverviewModal .modal-content');
     if (!modalContent) {
         return { x: offsetX, y: offsetY };
+        if (group.dateValue === todayDateValue) {
+            groupEl.classList.add('is-today');
+        }
     }
 
     const width = modalContent.offsetWidth || 0;
