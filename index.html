@@ -3045,32 +3045,28 @@ textarea.cal-todo-input {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: 8px;
+}
+
+.todo-overview-footer {
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    opacity: 0.64;
 }
 
 .todo-overview-pill,
 .todo-overview-range {
-    display: inline-flex;
-    align-items: center;
-    padding: 7px 12px;
-    border-radius: 7px;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    border: 1px solid rgba(255,255,255,0.16);
-    background: rgba(255,255,255,0.12);
-    color: #f7fbff;
-}
-
-.todo-overview-pill.is-done {
-    border-color: rgba(68, 174, 118, 0.32);
-    background: rgba(68, 174, 118, 0.18);
-}
-
-.todo-overview-pill.is-pending {
-    border-color: rgba(214, 168, 59, 0.32);
-    background: rgba(214, 168, 59, 0.18);
+    display: inline;
+    padding: 0;
+    border: none;
+    background: transparent;
+    border-radius: 0;
+    font-size: 6px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: rgba(247,251,255,0.68);
 }
 
 .todo-overview-hint {
@@ -3107,11 +3103,16 @@ textarea.cal-todo-input {
 .todo-overview-group {
     display: flex;
     flex-direction: column;
-    gap: 9px;
+    gap: 4px;
     padding: 12px;
     border-radius: 7px;
     background: rgba(10, 22, 30, 0.18);
     border: 1px solid rgba(255,255,255,0.12);
+}
+
+.todo-overview-group.is-notes-only {
+    gap: 0;
+    padding-bottom: 6px;
 }
 
 .todo-overview-group.is-retained {
@@ -3131,7 +3132,7 @@ textarea.cal-todo-input {
 }
 
 .todo-overview-group-title {
-    font-size: 13px;
+    font-size: 10.7px;
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -3148,7 +3149,8 @@ textarea.cal-todo-input {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    margin-top: -2px;
+    margin-top: -7px;
+    margin-bottom: -7px;
 }
 
 .todo-overview-date-note {
@@ -3184,8 +3186,9 @@ textarea.cal-todo-input {
 
 .todo-overview-group-list.is-notes-only {
     gap: 0;
-    min-height: 4px;
+    min-height: 0;
     padding: 0;
+    margin-top: -7px;
 }
 
 .todo-overview-project-group {
@@ -3221,7 +3224,7 @@ textarea.cal-todo-input {
 }
 
 .todo-overview-empty-date.is-notes-only {
-    min-height: 4px;
+    min-height: 0;
     padding: 0;
     border: none;
     background: transparent;
@@ -15004,14 +15007,14 @@ function ensureTodoOverviewModal() {
                     <small>Lista Geral</small>
                     <h2>To do list:</h2>
                 </div>
-                <div class="todo-overview-summary">
-                    <span class="todo-overview-pill" id="todoOverviewTotalPill">To Do 0</span>
-                    <span class="todo-overview-pill is-done" id="todoOverviewDonePill">Prontos 0</span>
-                    <span class="todo-overview-pill is-pending" id="todoOverviewPendingPill">To Do a fazer 0</span>
-                </div>
             </div>
             <div class="todo-overview-hint hidden" id="todoOverviewHint"></div>
             <div class="todo-overview-scroll" id="todoOverviewList"></div>
+            <div class="todo-overview-summary todo-overview-footer">
+                <span class="todo-overview-pill" id="todoOverviewTotalPill">To Do 0</span>
+                <span class="todo-overview-pill is-done" id="todoOverviewDonePill">Prontos 0</span>
+                <span class="todo-overview-pill is-pending" id="todoOverviewPendingPill">To Do a fazer 0</span>
+            </div>
         </div>
     `;
     document.body.appendChild(modal);
@@ -15793,7 +15796,8 @@ function renderTodoOverviewModal() {
     list.innerHTML = '';
     filteredGroups.forEach((group) => {
         const groupEl = document.createElement('section');
-        groupEl.className = `todo-overview-group${group.items.length === 0 && group.dateNotes.length === 0 ? ' is-retained' : ''}`;
+        const isNotesOnlyGroup = group.items.length === 0 && group.dateNotes.length > 0;
+        groupEl.className = `todo-overview-group${group.items.length === 0 && group.dateNotes.length === 0 ? ' is-retained' : ''}${isNotesOnlyGroup ? ' is-notes-only' : ''}`;
         groupEl.dataset.dateKey = group.dateValue;
 
         const head = document.createElement('div');
@@ -15850,7 +15854,7 @@ function renderTodoOverviewModal() {
 
         const groupList = document.createElement('div');
         groupList.className = 'todo-overview-group-list';
-        if (group.items.length === 0 && group.dateNotes.length > 0) {
+        if (isNotesOnlyGroup) {
             groupList.classList.add('is-notes-only');
         }
         attachTodoOverviewGroupDropHandlers(groupList, group.dateValue);
