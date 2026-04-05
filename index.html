@@ -2999,11 +2999,11 @@ textarea.cal-todo-input {
 
 .todo-overview-header {
     display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 16px;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 10px;
     padding-right: 52px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     cursor: grab;
     user-select: none;
 }
@@ -3022,14 +3022,20 @@ textarea.cal-todo-input {
 }
 
 .todo-overview-heading {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
     text-align: left;
     align-self: flex-start;
     margin-right: auto;
 }
 
 #todoOverviewModal .todo-overview-heading small {
+    width: 100%;
     text-align: left;
     margin-left: 0;
+    margin-right: auto;
 }
 
 #todoOverviewModal .todo-overview-heading h2 {
@@ -3037,8 +3043,10 @@ textarea.cal-todo-input {
     line-height: 1.05;
     color: #f7fbff;
     text-shadow: 0 6px 20px rgba(0,0,0,0.18);
-    text-align: left;
+    text-align: left !important;
     margin-left: 0;
+    margin-right: auto;
+    width: 100%;
 }
 
 .todo-overview-summary {
@@ -3050,10 +3058,10 @@ textarea.cal-todo-input {
 }
 
 .todo-overview-footer {
-    margin-top: 8px;
-    padding-top: 6px;
+    margin-top: 4px;
+    padding-top: 5px;
     border-top: 1px solid rgba(255,255,255,0.08);
-    opacity: 0.64;
+    opacity: 0.82;
 }
 
 .todo-overview-pill,
@@ -3063,10 +3071,18 @@ textarea.cal-todo-input {
     border: none;
     background: transparent;
     border-radius: 0;
-    font-size: 6px;
-    font-weight: 500;
+    font-size: 8.5px;
+    font-weight: 600;
     letter-spacing: 0.02em;
-    color: rgba(247,251,255,0.68);
+    color: rgba(146, 211, 255, 0.88);
+}
+
+.todo-overview-pill.is-done {
+    color: rgba(124, 216, 164, 0.9);
+}
+
+.todo-overview-pill.is-pending {
+    color: rgba(239, 199, 103, 0.9);
 }
 
 .todo-overview-hint {
@@ -3103,16 +3119,11 @@ textarea.cal-todo-input {
 .todo-overview-group {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
     padding: 12px;
     border-radius: 7px;
     background: rgba(10, 22, 30, 0.18);
     border: 1px solid rgba(255,255,255,0.12);
-}
-
-.todo-overview-group.is-notes-only {
-    gap: 0;
-    padding-bottom: 6px;
 }
 
 .todo-overview-group.is-retained {
@@ -3123,7 +3134,7 @@ textarea.cal-todo-input {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 12px;
+    gap: 8px;
 }
 
 .todo-overview-group-head.is-composer-selectable,
@@ -3132,34 +3143,34 @@ textarea.cal-todo-input {
 }
 
 .todo-overview-group-title {
-    font-size: 10.7px;
-    font-weight: 800;
-    letter-spacing: 0.08em;
+    font-size: 11.7px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: #f4f8fb;
+    color: rgba(244,248,251,0.82);
 }
 
 .todo-overview-group-meta {
-    font-size: 11px;
-    color: rgba(238,244,248,0.68);
+    font-size: 10px;
+    color: rgba(238,244,248,0.56);
     text-align: right;
 }
 
 .todo-overview-date-notes {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
     margin-top: -7px;
-    margin-bottom: -7px;
+    margin-bottom: -5px;
 }
 
 .todo-overview-date-note {
     display: flex;
     align-items: flex-start;
     gap: 8px;
-    font-size: 11px;
-    line-height: 1.3;
-    color: rgba(238,244,248,0.8);
+    font-size: 10px;
+    line-height: 1.22;
+    color: rgba(238,244,248,0.76);
 }
 
 .todo-overview-date-note-label {
@@ -3186,9 +3197,8 @@ textarea.cal-todo-input {
 
 .todo-overview-group-list.is-notes-only {
     gap: 0;
-    min-height: 0;
+    min-height: 4px;
     padding: 0;
-    margin-top: -7px;
 }
 
 .todo-overview-project-group {
@@ -3224,7 +3234,7 @@ textarea.cal-todo-input {
 }
 
 .todo-overview-empty-date.is-notes-only {
-    min-height: 0;
+    min-height: 4px;
     padding: 0;
     border: none;
     background: transparent;
@@ -15796,8 +15806,7 @@ function renderTodoOverviewModal() {
     list.innerHTML = '';
     filteredGroups.forEach((group) => {
         const groupEl = document.createElement('section');
-        const isNotesOnlyGroup = group.items.length === 0 && group.dateNotes.length > 0;
-        groupEl.className = `todo-overview-group${group.items.length === 0 && group.dateNotes.length === 0 ? ' is-retained' : ''}${isNotesOnlyGroup ? ' is-notes-only' : ''}`;
+        groupEl.className = `todo-overview-group${group.items.length === 0 && group.dateNotes.length === 0 ? ' is-retained' : ''}`;
         groupEl.dataset.dateKey = group.dateValue;
 
         const head = document.createElement('div');
@@ -15854,7 +15863,7 @@ function renderTodoOverviewModal() {
 
         const groupList = document.createElement('div');
         groupList.className = 'todo-overview-group-list';
-        if (isNotesOnlyGroup) {
+        if (group.items.length === 0 && group.dateNotes.length > 0) {
             groupList.classList.add('is-notes-only');
         }
         attachTodoOverviewGroupDropHandlers(groupList, group.dateValue);
