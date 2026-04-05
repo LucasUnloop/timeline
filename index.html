@@ -1989,6 +1989,46 @@ body.br-mode .br-control-indicator:hover {
     box-shadow: 0 10px 22px rgba(18, 28, 36, 0.22);
 }
 
+.cal-floating-controls {
+    position: absolute;
+    right: 18px;
+    bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 9;
+}
+
+.cal-floating-controls .cal-overview-fab,
+.cal-floating-controls .cal-close-btn {
+    position: static;
+    margin: 0;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(42, 52, 57, 0.14);
+    border-radius: 50%;
+    background: rgba(255,255,255,0.94);
+    color: #2a3439;
+    box-shadow: 0 8px 18px rgba(18, 28, 36, 0.18);
+    line-height: 1;
+}
+
+.cal-floating-controls .cal-close-btn {
+    font-size: 12px;
+}
+
+.cal-floating-controls .cal-overview-fab:hover,
+.cal-floating-controls .cal-close-btn:hover {
+    transform: translateY(-1px);
+    background: #ffffff;
+    box-shadow: 0 10px 22px rgba(18, 28, 36, 0.22);
+}
+
 .cal-grid-wrap {
     flex: 1;
     display: flex;
@@ -2279,6 +2319,7 @@ body.br-mode .br-control-indicator:hover {
     font-size: 0.68rem;
     line-height: 1.28;
     font-weight: 600;
+    white-space: pre-line;
     overflow: hidden;
     display: -webkit-box;
     line-clamp: 3;
@@ -2293,11 +2334,25 @@ body.br-mode .br-control-indicator:hover {
     border-radius: 4px;
     padding: 2px 4px;
     background: rgba(255,255,255,0.96);
-    color: inherit;
+    color: #16212b !important;
+    -webkit-text-fill-color: #16212b !important;
     font-size: 0.58rem;
     font-weight: 700;
     line-height: 1.25;
     outline: 1px solid rgba(0,83,220,0.28);
+}
+
+.cal-todo-input::placeholder {
+    color: rgba(22,33,43,0.56);
+    -webkit-text-fill-color: rgba(22,33,43,0.56);
+}
+
+textarea.cal-todo-input {
+    display: block;
+    min-height: 22px;
+    resize: none;
+    overflow-y: hidden;
+    white-space: pre-wrap;
 }
 
 .cal-day-context-menu,
@@ -6264,7 +6319,7 @@ async function requireInitialGoogleLogin() {
                 authInFlight = false;
                 overlay.classList.remove('login-pending');
                 overlay.classList.add('login-clickable');
-                loadingStatusText.textContent = `${error.message || 'Falha ao autenticar.'} Clique na animacao para tentar novamente.`;
+                loadingStatusText.textContent = `${error.message || 'Falha ao autenticar.'} Clique para iniciar novamente.`;
             }
         };
 
@@ -15029,6 +15084,13 @@ function ensureTodoOverviewButtons() {
     }
 
     const calendarInner = document.querySelector('#calendarModal .cal-modal-inner');
+    let calendarFloatingControls = calendarInner?.querySelector('.cal-floating-controls') || null;
+    if (calendarInner && !calendarFloatingControls) {
+        calendarFloatingControls = document.createElement('div');
+        calendarFloatingControls.className = 'cal-floating-controls';
+        calendarInner.appendChild(calendarFloatingControls);
+    }
+
     let calendarButton = document.getElementById('calendarTodoOverviewBtn');
     if (!calendarButton) {
         calendarButton = document.createElement('button');
@@ -15039,8 +15101,15 @@ function ensureTodoOverviewButtons() {
     }
     calendarButton.className = 'cal-overview-fab';
     calendarButton.textContent = '☰';
-    if (calendarInner && calendarButton.parentElement !== calendarInner) {
-        calendarInner.appendChild(calendarButton);
+
+    const calendarCloseButton = document.getElementById('calCloseBtn');
+    if (calendarFloatingControls) {
+        if (calendarCloseButton && calendarCloseButton.parentElement !== calendarFloatingControls) {
+            calendarFloatingControls.appendChild(calendarCloseButton);
+        }
+        if (calendarButton.parentElement !== calendarFloatingControls) {
+            calendarFloatingControls.appendChild(calendarButton);
+        }
     }
 }
 
@@ -18866,8 +18935,8 @@ function getWeatherIcon(weatherCode) {
             throw new Error('Projeto do To Do nao encontrado.');
         }
 
-        const normalizedText = String(nextText || '').trim();
-        if (!normalizedText) {
+        const normalizedText = String(nextText || '').replace(/\r\n?/g, '\n');
+        if (!normalizedText.trim()) {
             throw new Error('Escreva a descricao antes de salvar o To Do.');
         }
 
@@ -18966,7 +19035,7 @@ function getWeatherIcon(weatherCode) {
         if (!card || !item) return;
         if (Date.now() < calendarTodoState.ignoreClickUntil || calendarTodoState.dragItem) return;
 
-        const currentText = String(item.text || '').trim();
+        const currentText = String(item.text || '').replace(/\r\n?/g, '\n');
         const projectLabel = card.querySelector('.cal-todo-project');
         const textLabel = card.querySelector('.cal-todo-text');
         if (!textLabel) return;
@@ -18974,12 +19043,20 @@ function getWeatherIcon(weatherCode) {
         calendarTodoState.editingId = item.id;
         if (projectLabel) projectLabel.style.display = 'none';
 
-        const input = document.createElement('input');
-        input.type = 'text';
+        const input = document.createElement('textarea');
         input.className = 'cal-todo-input';
+        input.rows = Math.max(1, currentText.split('\n').length);
         input.value = currentText;
         input.setAttribute('aria-label', `Editar To Do de ${item.projectName}`);
+        const baseHeight = Math.max(22, Math.ceil(textLabel.getBoundingClientRect().height));
         textLabel.replaceWith(input);
+
+        const syncInputHeight = () => {
+            input.style.height = 'auto';
+            input.style.height = `${Math.max(baseHeight, input.scrollHeight)}px`;
+        };
+
+        syncInputHeight();
         input.focus();
         input.select();
 
@@ -18988,8 +19065,8 @@ function getWeatherIcon(weatherCode) {
             if (finished) return;
             finished = true;
             calendarTodoState.editingId = '';
-            const nextText = String(input.value || '').trim();
-            if (!shouldSave || !nextText || nextText === currentText) {
+            const nextText = String(input.value || '').replace(/\r\n?/g, '\n');
+            if (!shouldSave || !nextText.trim() || nextText === currentText) {
                 if (isCalendarModalOpen()) {
                     renderCalendar();
                 }
@@ -19014,6 +19091,8 @@ function getWeatherIcon(weatherCode) {
                 finish(false);
             }
         });
+
+        input.addEventListener('input', syncInputHeight);
 
         input.addEventListener('blur', () => finish(true), { once: true });
     }
