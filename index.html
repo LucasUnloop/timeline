@@ -2154,6 +2154,7 @@ body.br-mode .br-control-indicator:hover {
     line-height: 1;
     cursor: default;
     user-select: none;
+    text-decoration: none;
 }
 
 .cal-hchip.is-clickable {
@@ -4390,6 +4391,7 @@ const EMBEDDED_CSS = `
     line-height: 1;
     cursor: default;
     user-select: none;
+    text-decoration: none;
 }
 
 .cal-hchip.is-clickable {
@@ -19956,7 +19958,8 @@ function getWeatherIcon(weatherCode) {
                 map[key].events[projectName] = [];
             }
             const existingEvents = map[key].events[projectName];
-            if (existingEvents.some(item => item.type === eventData.type && item.label === eventData.label)) {
+            const eventKey = eventData.id || eventData.url || `${eventData.type}|${eventData.label}`;
+            if (existingEvents.some(item => (item.id || item.url || `${item.type}|${item.label}`) === eventKey)) {
                 return;
             }
             existingEvents.push(eventData);
@@ -20114,9 +20117,13 @@ function getWeatherIcon(weatherCode) {
                 if (Number.isNaN(dateValue.getTime())) return;
                 dateValue.setHours(0, 0, 0, 0);
                 addEvent(dateValue, projectName, {
+                    id: googleEvent.id,
                     label: googleEvent.label || 'Evento Google',
                     type: 'workspace',
-                    tooltip: googleEvent.tooltip || googleEvent.label || 'Evento Google'
+                    tooltip: googleEvent.tooltip || googleEvent.label || 'Evento Google',
+                    url: googleEvent.url || '',
+                    source: googleEvent.source || 'googleCalendar',
+                    calendarId: googleEvent.calendarId || 'primary'
                 });
             });
         });
@@ -20742,23 +20749,25 @@ function getWeatherIcon(weatherCode) {
                     if (seenHeaderChips[dedupeKey]) return;
                     seenHeaderChips[dedupeKey] = true;
 
-                    const chip = document.createElement('span');
                     const fullText = `${emoji} ${eventItem.label}`;
                     const tooltipText = eventItem.tooltip || fullText;
                     const eventUrl = getSafeCalendarEventUrl(eventItem);
+                    const chip = document.createElement(eventUrl ? 'a' : 'span');
                     chip.className = `cal-hchip chip-${eventItem.type}`;
                     chip.textContent = fullText;
                     if (eventUrl) {
                         chip.classList.add('is-clickable');
+                        chip.href = eventUrl;
+                        chip.target = '_blank';
+                        chip.rel = 'noopener noreferrer';
                         chip.setAttribute('role', 'link');
                         chip.tabIndex = 0;
                         chip.addEventListener('click', event => {
                             hideCalendarTooltip();
-                            openCalendarEventUrl(eventUrl);
                             event.stopPropagation();
                         });
                         chip.addEventListener('keydown', event => {
-                            if (event.key !== 'Enter' && event.key !== ' ') return;
+                            if (event.key !== ' ') return;
                             event.preventDefault();
                             hideCalendarTooltip();
                             openCalendarEventUrl(eventUrl);
